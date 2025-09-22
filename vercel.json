@@ -9,7 +9,7 @@
       "VITE_BUILD_TARGET": "production"
     }
   },
-  "buildCommand": "npm run build:prod",
+  "buildCommand": "npm run build",
   "headers": [
     {
       "source": "/(.*)",
