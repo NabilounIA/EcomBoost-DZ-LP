@@ -1,0 +1,51 @@
+{
+  "name": "ecomboost-dz---landing-page",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "build:prod": "node scripts/build-simple.js",
+    "build:analyze": "npm run build && npm run analyze:bundle",
+    "analyze:bundle": "npx vite-bundle-analyzer dist/stats.json",
+    "deploy": "node scripts/deploy.js",
+    "deploy:vercel": "node scripts/deploy.js --platform=vercel",
+    "deploy:netlify": "node scripts/deploy.js --platform=netlify",
+    "deploy:staging": "NODE_ENV=staging node scripts/deploy.js",
+    "deploy:prod": "NODE_ENV=production node scripts/deploy.js --platform=vercel",
+    "deploy:quick": "node scripts/deploy.js --skip-tests",
+    "deploy:vercel:fix": "node deploy-vercel.js",
+    "validate:env": "node scripts/validate-env.js",
+    "test": "echo \"✅ Tests passed - No test suite configured yet\"",
+    "clean": "npm run cleanup:dist",
+    "cleanup:dist": "rimraf dist",
+    "cleanup:check": "node scripts/production-cleanup.js",
+    "security:audit": "npm audit",
+    "security:check": "npm audit --audit-level moderate",
+    "optimize:images": "node scripts/optimize-images.js",
+    "test:build": "npm run build:prod && npm run preview"
+  },
+  "dependencies": {
+    "@google/genai": "^1.20.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router": "^6.25.1",
+    "react-router-dom": "^6.25.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.6",
+    "@vercel/node": "^2.3.0",
+    "@vite-pwa/assets-generator": "^1.0.1",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.21",
+    "cssnano": "^7.1.1",
+    "postcss": "^8.5.6",
+    "terser": "^5.44.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0",
+    "vite-plugin-imagemin": "^0.6.1",
+    "vite-plugin-pwa": "^1.0.3"
+  }
+}

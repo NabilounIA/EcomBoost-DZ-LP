@@ -1,0 +1,155 @@
+{
+  "version": 2,
+  "name": "ecomboost-dz",
+  "alias": ["ecomboost-dz.vercel.app"],
+  "regions": ["cdg1"],
+  "build": {
+    "env": {
+      "NODE_ENV": "production",
+      "VITE_BUILD_TARGET": "production"
+    }
+  },
+  "buildCommand": "npm run build:prod",
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node@3",
+      "maxDuration": 10
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains; preload"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        },
+        {
+          "key": "Access-Control-Max-Age",
+          "value": "86400"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/wp-admin",
+      "destination": "/404",
+      "permanent": false
+    },
+    {
+      "source": "/.env",
+      "destination": "/404",
+      "permanent": false
+    },
+    {
+      "source": "/config",
+      "destination": "/404",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/api/robots"
+    },
+    {
+      "source": "/((?!api|_next|_static|favicon.ico|sitemap.xml|robots.txt|assets).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "trailingSlash": false,
+  "cleanUrls": true,
+  "github": {
+    "silent": true
+  },
+  "env": [
+    "NODE_ENV",
+    "VITE_API_BASE_URL",
+    "VITE_GA_MEASUREMENT_ID",
+    "VITE_WHATSAPP_NUMBER",
+    "VITE_CONTACT_EMAIL",
+    "VITE_ENABLE_ANALYTICS",
+    "VITE_ENABLE_AB_TESTING",
+    "VITE_ENABLE_PERFORMANCE_MONITORING",
+    "VITE_ENABLE_ERROR_TRACKING",
+    "GA4_API_SECRET",
+    "WHATSAPP_BUSINESS_NUMBER"
+  ]
+}
