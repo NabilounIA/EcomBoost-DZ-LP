@@ -10,12 +10,6 @@
     }
   },
   "buildCommand": "npm run build:prod",
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "@vercel/node@20.9.0",
-      "maxDuration": 10
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
