@@ -12,7 +12,7 @@
   "buildCommand": "npm run build:prod",
   "functions": {
     "api/**/*.ts": {
-      "runtime": "nodejs20.x",
+      "runtime": "@vercel/node@20.9.0",
       "maxDuration": 10
     }
   },
