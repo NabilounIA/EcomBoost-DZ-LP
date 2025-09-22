@@ -3,6 +3,7 @@
   "name": "ecomboost-dz",
   "alias": ["ecomboost-dz.vercel.app"],
   "regions": ["cdg1"],
+  "outputDirectory": "dist",
   "build": {
     "env": {
       "NODE_ENV": "production",
