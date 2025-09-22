@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Save, X, MessageSquare, Brain, Database, Activity } from 'lucide-react';
+// Commenté pour résoudre le problème de build (dépendance manquante)
+// import { Plus, Edit, Trash2, Save, X, MessageSquare, Brain, Database, Activity } from 'lucide-react';
 import MonitoringDashboard from './MonitoringDashboard';
 
 interface KnowledgeItem {
