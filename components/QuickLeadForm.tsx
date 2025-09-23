@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { useQuickLeadCapture } from '../hooks/useLeadCapture';
 
 interface QuickLeadFormProps {
-  onSuccess?: (leadId: string) => void;
-  onError?: (error: string) => void;
+  onSuccess?: () => void;
   className?: string;
   title?: string;
   description?: string;
@@ -15,7 +13,6 @@ interface QuickLeadFormProps {
 
 const QuickLeadForm: React.FC<QuickLeadFormProps> = ({
   onSuccess,
-  onError,
   className = '',
   title = 'Demandez votre devis gratuit',
   description = 'Remplissez ce formulaire et notre équipe vous contactera dans les 24h.',
@@ -24,8 +21,6 @@ const QuickLeadForm: React.FC<QuickLeadFormProps> = ({
   showMessage = false,
   compact = false
 }) => {
-  const { submitQuickLead, isSubmitting, isCompleted, resetQuickForm } = useQuickLeadCapture();
-  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -37,6 +32,7 @@ const QuickLeadForm: React.FC<QuickLeadFormProps> = ({
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showErrors, setShowErrors] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -65,7 +61,7 @@ const QuickLeadForm: React.FC<QuickLeadFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowErrors(true);
     
@@ -73,23 +69,32 @@ const QuickLeadForm: React.FC<QuickLeadFormProps> = ({
       return;
     }
     
-    try {
-      const result = await submitQuickLead(formData);
-      
-      if (result.success) {
-        if (onSuccess) {
-          onSuccess(result.leadId || 'quick-lead');
-        }
-      } else {
-        if (onError) {
-          onError(result.error || 'Erreur lors de l\'envoi');
-        }
+    setIsSubmitting(true);
+
+    // Créer le message WhatsApp
+    const whatsappMessage = `Bonjour ! Je souhaite obtenir un devis pour vos services EcomBoost DZ.
+
+📋 Mes informations :
+• Nom : ${formData.firstName} ${formData.lastName}
+• Email : ${formData.email}
+• Téléphone : ${formData.phone}${showBusinessName && formData.businessName ? `\n• Entreprise : ${formData.businessName}` : ''}${showMessage && formData.message ? `\n\n💬 Message : ${formData.message}` : ''}
+
+Merci de me contacter pour discuter de mes besoins !`;
+
+    // Encoder le message pour WhatsApp
+    const encodedMessage = encodeURIComponent(whatsappMessage);
+    const whatsappUrl = `https://wa.me/213XXXXXXXXX?text=${encodedMessage}`;
+
+    // Ouvrir WhatsApp
+    window.open(whatsappUrl, '_blank');
+
+    // Simuler un délai puis appeler onSuccess
+    setTimeout(() => {
+      setIsSubmitting(false);
+      if (onSuccess) {
+        onSuccess();
       }
-    } catch (error) {
-      if (onError) {
-        onError('Une erreur inattendue s\'est produite');
-      }
-    }
+    }, 1000);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -101,197 +106,124 @@ const QuickLeadForm: React.FC<QuickLeadFormProps> = ({
     }
   };
 
-  const handleReset = () => {
-    setFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      businessName: '',
-      message: ''
-    });
-    setErrors({});
-    setShowErrors(false);
-    resetQuickForm();
-  };
-
-  if (isCompleted) {
-    return (
-      <div className={`bg-white rounded-lg shadow-lg p-6 text-center ${className}`}>
-        <div className="mb-4">
-          <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
-            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Demande envoyée !
-          </h3>
-          <p className="text-gray-600 text-sm">
-            Nous vous contacterons très bientôt.
-          </p>
-        </div>
-        
-        <button
-          onClick={handleReset}
-          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-        >
-          Nouvelle demande
-        </button>
-      </div>
-    );
-  }
-
-  const inputClasses = (fieldName: string) => `
-    w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200
-    ${compact ? 'text-sm' : ''}
-    ${showErrors && errors[fieldName] ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:border-gray-400'}
-  `;
+  const inputClasses = `w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${compact ? 'py-2 text-sm' : ''}`;
+  const errorClasses = 'text-red-500 text-sm mt-1';
 
   return (
-    <div className={`bg-white rounded-lg shadow-lg ${compact ? 'p-4' : 'p-6'} ${className}`}>
+    <div className={`bg-white rounded-xl shadow-lg p-6 ${compact ? 'p-4' : ''} ${className}`}>
       {!compact && (
-        <div className="mb-6 text-center">
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            {title}
-          </h3>
-          <p className="text-gray-600 text-sm">
-            {description}
-          </p>
+        <div className="text-center mb-6">
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
+          <p className="text-gray-600">{description}</p>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Name Fields */}
-        <div className={compact ? 'space-y-3' : 'grid grid-cols-2 gap-4'}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Prénom *
-            </label>
             <input
               type="text"
+              placeholder="Prénom *"
               value={formData.firstName}
               onChange={(e) => handleInputChange('firstName', e.target.value)}
-              placeholder="Votre prénom"
-              className={inputClasses('firstName')}
+              className={`${inputClasses} ${showErrors && errors.firstName ? 'border-red-500' : ''}`}
+              disabled={isSubmitting}
             />
             {showErrors && errors.firstName && (
-              <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+              <p className={errorClasses}>{errors.firstName}</p>
             )}
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nom *
-            </label>
             <input
               type="text"
+              placeholder="Nom *"
               value={formData.lastName}
               onChange={(e) => handleInputChange('lastName', e.target.value)}
-              placeholder="Votre nom"
-              className={inputClasses('lastName')}
+              className={`${inputClasses} ${showErrors && errors.lastName ? 'border-red-500' : ''}`}
+              disabled={isSubmitting}
             />
             {showErrors && errors.lastName && (
-              <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+              <p className={errorClasses}>{errors.lastName}</p>
             )}
           </div>
         </div>
 
-        {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email *
-          </label>
           <input
             type="email"
+            placeholder="Email *"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
-            placeholder="votre@email.com"
-            className={inputClasses('email')}
+            className={`${inputClasses} ${showErrors && errors.email ? 'border-red-500' : ''}`}
+            disabled={isSubmitting}
           />
           {showErrors && errors.email && (
-            <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+            <p className={errorClasses}>{errors.email}</p>
           )}
         </div>
 
-        {/* Phone */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Téléphone *
-          </label>
           <input
             type="tel"
+            placeholder="Téléphone *"
             value={formData.phone}
             onChange={(e) => handleInputChange('phone', e.target.value)}
-            placeholder="+213 XX XX XX XX"
-            className={inputClasses('phone')}
+            className={`${inputClasses} ${showErrors && errors.phone ? 'border-red-500' : ''}`}
+            disabled={isSubmitting}
           />
           {showErrors && errors.phone && (
-            <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+            <p className={errorClasses}>{errors.phone}</p>
           )}
         </div>
 
-        {/* Business Name */}
         {showBusinessName && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nom de l'entreprise
-            </label>
             <input
               type="text"
+              placeholder="Nom de l'entreprise"
               value={formData.businessName}
               onChange={(e) => handleInputChange('businessName', e.target.value)}
-              placeholder="Votre entreprise"
-              className={inputClasses('businessName')}
+              className={inputClasses}
+              disabled={isSubmitting}
             />
           </div>
         )}
 
-        {/* Message */}
         {showMessage && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Message
-            </label>
             <textarea
+              placeholder="Votre message"
               value={formData.message}
               onChange={(e) => handleInputChange('message', e.target.value)}
-              placeholder="Décrivez brièvement votre projet..."
-              rows={3}
-              className={inputClasses('message')}
+              rows={4}
+              className={inputClasses}
+              disabled={isSubmitting}
             />
           </div>
         )}
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-            compact ? 'py-2 text-sm' : 'py-3'
-          }`}
+          className={`w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${compact ? 'py-2 text-sm' : ''}`}
         >
           {isSubmitting ? (
-            <span className="flex items-center justify-center">
-              <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Envoi...
-            </span>
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+              Redirection...
+            </div>
           ) : (
             buttonText
           )}
         </button>
-
-        {/* Privacy Notice */}
-        <p className="text-xs text-gray-500 text-center">
-          En soumettant ce formulaire, vous acceptez notre{' '}
-          <a href="/privacy" className="text-blue-600 hover:underline">
-            politique de confidentialité
-          </a>
-        </p>
       </form>
+
+      <div className="text-center mt-4">
+        <p className="text-xs text-gray-500">
+          En soumettant ce formulaire, vous serez redirigé vers WhatsApp
+        </p>
+      </div>
     </div>
   );
 };

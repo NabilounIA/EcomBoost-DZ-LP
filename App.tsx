@@ -29,14 +29,13 @@ import LazyLoad from './components/LazyLoad';
 
 import AlertNotifications from './components/AlertNotifications';
 import IntelligentChatbot from './components/IntelligentChatbot';
-import { useAdvancedAnalytics } from './hooks/useAdvancedAnalytics';
+
 import { useHomepageSEO, usePrivacySEO } from './hooks/useSEO';
-import { usePagePerformance } from './hooks/usePerformanceMonitoring';
+
 import { initSentry } from './services/monitoring';
 
 const LandingPage: React.FC = () => {
   useHomepageSEO();
-  usePagePerformance('homepage');
   
   return (
     <>
@@ -84,11 +83,9 @@ const LandingPage: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  // Initialize analytics tracking
-  useAdvancedAnalytics();
+
   
-  // Initialize performance monitoring
-  usePagePerformance('app');
+
 
   // Initialize Sentry monitoring
   useEffect(() => {

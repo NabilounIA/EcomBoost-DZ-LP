@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import useAnalytics from '../hooks/useAnalytics';
 
 interface CaseStudy {
   id: string;
@@ -31,7 +30,7 @@ interface CaseStudy {
 
 const CaseStudies: React.FC = () => {
   const [activeCase, setActiveCase] = useState(0);
-  const { trackEvent } = useAnalytics();
+
 
   const caseStudies: CaseStudy[] = [
     {

@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import { WHATSAPP_LINK } from '../constants';
 import { WhatsAppIcon } from './icons/WhatsAppIcon';
-import { useAdvancedAnalytics } from '../hooks/useAdvancedAnalytics';
+
 import { useHeroCTATest } from '../hooks/useABTesting';
 import QuickLeadForm from './QuickLeadForm';
 
 const Hero: React.FC = () => {
-  const { trackCTAClick } = useAdvancedAnalytics();
   const { variant, config, trackConversion, isLoading } = useHeroCTATest();
   const [showLeadForm, setShowLeadForm] = useState(false);
 
   const handleWhatsAppClick = () => {
-    const buttonText = config.text || 'Démarrer sur WhatsApp';
-    trackCTAClick(buttonText, 'Hero Section');
     trackConversion(); // Track A/B test conversion
   };
 

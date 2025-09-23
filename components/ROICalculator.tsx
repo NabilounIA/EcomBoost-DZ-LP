@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import useAnalytics from '../hooks/useAnalytics';
+
 
 const ROICalculator: React.FC = () => {
   const [monthlyOrders, setMonthlyOrders] = useState(50);
@@ -16,7 +16,7 @@ const ROICalculator: React.FC = () => {
     paybackPeriod: 0
   });
   
-  const { trackEvent } = useAnalytics();
+
 
   // Prix des plans (en DA)
   const planPrices = {

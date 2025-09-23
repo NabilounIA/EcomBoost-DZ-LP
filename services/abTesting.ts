@@ -1,5 +1,5 @@
 // A/B Testing Service for EcomBoost DZ
-import analytics from './analytics';
+
 
 export interface ABTestVariant {
   id: string;
@@ -49,12 +49,7 @@ class ABTestingService {
     // Set up default tests
     this.setupDefaultTests();
     
-    // Track A/B test initialization
-    analytics.trackEvent({
-      action: 'ab_testing_initialized',
-      category: 'AB Testing',
-      label: 'Service Started'
-    });
+
   }
 
   // Create a new A/B test
@@ -69,15 +64,7 @@ class ABTestingService {
     this.tests.set(test.id, test);
     this.saveToStorage();
 
-    analytics.trackEvent({
-      action: 'ab_test_created',
-      category: 'AB Testing',
-      label: test.name,
-      custom_parameters: {
-        test_id: test.id,
-        variants_count: test.variants.length
-      }
-    });
+
   }
 
   // Get variant for a user in a specific test
@@ -107,17 +94,7 @@ class ABTestingService {
     userTests.set(testId, variantId);
     this.saveToStorage();
 
-    // Track assignment
-    analytics.trackEvent({
-      action: 'ab_test_assignment',
-      category: 'AB Testing',
-      label: test.name,
-      custom_parameters: {
-        test_id: testId,
-        variant_id: variantId,
-        user_id: userId
-      }
-    });
+
 
     return variantId;
   }
@@ -142,16 +119,7 @@ class ABTestingService {
     this.results.push(result);
     this.saveToStorage();
 
-    // Track conversion in analytics
-    analytics.trackConversion({
-      event_name: 'ab_test_conversion',
-      value: conversionValue,
-      custom_parameters: {
-        test_id: testId,
-        variant_id: variantId,
-        user_id: userId
-      }
-    });
+
   }
 
   // Get test results and statistics

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import useAnalytics from '../hooks/useAnalytics';
+
 
 const WhatsAppWidget: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentMessage, setCurrentMessage] = useState(0);
-  const { trackWhatsAppClick, trackEvent, ANALYTICS_EVENTS } = useAnalytics();
+
 
   // Messages pré-définis selon la section
   const messages = [
@@ -33,9 +33,6 @@ const WhatsAppWidget: React.FC = () => {
   }, [isExpanded, messages.length]);
 
   const handleWhatsAppClick = () => {
-    // Tracking Analytics
-    trackWhatsAppClick('floating_widget');
-    
     const phoneNumber = "213770123456";
     const message = encodeURIComponent(messages[currentMessage]);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
@@ -46,14 +43,7 @@ const WhatsAppWidget: React.FC = () => {
     const newExpandedState = !isExpanded;
     setIsExpanded(newExpandedState);
     
-    // Tracking de l'expansion du widget
-    if (newExpandedState) {
-      trackEvent({
-        action: 'expand',
-        category: 'engagement',
-        label: 'whatsapp_widget'
-      });
-    }
+
   };
 
   if (!isVisible) return null;

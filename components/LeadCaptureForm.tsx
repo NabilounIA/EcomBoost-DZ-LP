@@ -1,344 +1,192 @@
-import React, { useState, useEffect } from 'react';
-import { useLeadCapture } from '../hooks/useLeadCapture';
-import { FormField } from '../services/leadCapture';
+import React, { useState } from 'react';
 
 interface LeadCaptureFormProps {
-  onSuccess?: (leadId: string) => void;
-  onError?: (error: string) => void;
+  onSuccess?: () => void;
   className?: string;
-  showProgress?: boolean;
-  showLeadScore?: boolean;
 }
 
 const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
   onSuccess,
-  onError,
-  className = '',
-  showProgress = true,
-  showLeadScore = false
+  className = ''
 }) => {
-  const {
-    currentStep,
-    totalSteps,
-    currentStepData,
-    isFirstStep,
-    isLastStep,
-    formData,
-    updateFormData,
-    nextStep,
-    previousStep,
-    validateCurrentStep,
-    canProceedToNext,
-    submitLead,
-    isSubmitting,
-    isCompleted,
-    leadScore,
-    resetForm,
-    getProgress
-  } = useLeadCapture();
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    businessName: '',
+    message: ''
+  });
 
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [showErrors, setShowErrors] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset errors when step changes
-  useEffect(() => {
-    setValidationErrors([]);
-    setShowErrors(false);
-  }, [currentStep]);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-  // Handle form completion
-  useEffect(() => {
-    if (isCompleted && onSuccess) {
-      onSuccess('lead-captured');
-    }
-  }, [isCompleted, onSuccess]);
+    // Créer le message WhatsApp
+    const whatsappMessage = `Bonjour ! Je suis intéressé(e) par vos services EcomBoost DZ.
 
-  const handleNext = () => {
-    const errors = validateCurrentStep();
-    setValidationErrors(errors);
-    
-    if (errors.length > 0) {
-      setShowErrors(true);
-      return;
-    }
-    
-    setShowErrors(false);
-    
-    if (isLastStep) {
-      handleSubmit();
-    } else {
-      nextStep();
-    }
-  };
+📋 Mes informations :
+• Nom : ${formData.firstName} ${formData.lastName}
+• Email : ${formData.email}
+• Téléphone : ${formData.phone}
+• Entreprise : ${formData.businessName || 'Non spécifié'}
 
-  const handlePrevious = () => {
-    setShowErrors(false);
-    previousStep();
-  };
+💬 Message : ${formData.message || 'Demande d\'information sur vos services'}
 
-  const handleSubmit = async () => {
-    const result = await submitLead();
-    
-    if (!result.success) {
-      if (onError) {
-        onError(result.error || 'Erreur lors de la soumission');
+Merci de me contacter pour discuter de mes besoins !`;
+
+    // Encoder le message pour WhatsApp
+    const encodedMessage = encodeURIComponent(whatsappMessage);
+    const whatsappUrl = `https://wa.me/213XXXXXXXXX?text=${encodedMessage}`;
+
+    // Ouvrir WhatsApp
+    window.open(whatsappUrl, '_blank');
+
+    // Simuler un délai puis appeler onSuccess
+    setTimeout(() => {
+      setIsSubmitting(false);
+      if (onSuccess) {
+        onSuccess();
       }
-    }
+    }, 1000);
   };
 
-  const handleFieldChange = (fieldName: string, value: any) => {
-    updateFormData({ [fieldName]: value });
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
-
-  const renderField = (field: FormField) => {
-    const value = formData[field.name as keyof typeof formData] || '';
-    const hasError = showErrors && validationErrors.some(error => error.includes(field.label));
-
-    const baseInputClasses = `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-      hasError ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:border-gray-400'
-    }`;
-
-    switch (field.type) {
-      case 'text':
-      case 'email':
-      case 'tel':
-        return (
-          <div key={field.name} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <input
-              type={field.type}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              placeholder={field.placeholder}
-              className={baseInputClasses}
-              required={field.required}
-            />
-            {field.helpText && (
-              <p className="text-sm text-gray-500">{field.helpText}</p>
-            )}
-          </div>
-        );
-
-      case 'select':
-        return (
-          <div key={field.name} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <select
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              className={baseInputClasses}
-              required={field.required}
-            >
-              <option value="">Sélectionnez une option</option>
-              {field.options?.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {field.helpText && (
-              <p className="text-sm text-gray-500">{field.helpText}</p>
-            )}
-          </div>
-        );
-
-      case 'textarea':
-        return (
-          <div key={field.name} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <textarea
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              placeholder={field.placeholder}
-              rows={4}
-              className={baseInputClasses}
-              required={field.required}
-            />
-            {field.helpText && (
-              <p className="text-sm text-gray-500">{field.helpText}</p>
-            )}
-          </div>
-        );
-
-      case 'checkbox':
-        return (
-          <div key={field.name} className="space-y-2">
-            <label className="flex items-start space-x-3">
-              <input
-                type="checkbox"
-                checked={!!value}
-                onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-                className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                required={field.required}
-              />
-              <span className="text-sm text-gray-700">
-                {field.label}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
-              </span>
-            </label>
-            {field.helpText && (
-              <p className="text-sm text-gray-500 ml-7">{field.helpText}</p>
-            )}
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  if (isCompleted) {
-    return (
-      <div className={`bg-white rounded-lg shadow-lg p-8 text-center ${className}`}>
-        <div className="mb-6">
-          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">
-            Merci pour votre demande !
-          </h3>
-          <p className="text-gray-600">
-            Nous avons bien reçu vos informations et notre équipe vous contactera dans les plus brefs délais.
-          </p>
-        </div>
-        
-        {showLeadScore && (
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
-              Score de qualification : <span className="font-semibold">{leadScore}/100</span>
-            </p>
-          </div>
-        )}
-        
-        <button
-          onClick={resetForm}
-          className="px-6 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200"
-        >
-          Nouvelle demande
-        </button>
-      </div>
-    );
-  }
 
   return (
-    <div className={`bg-white rounded-lg shadow-lg p-8 ${className}`}>
-      {/* Progress Bar */}
-      {showProgress && (
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">
-              Étape {currentStep + 1} sur {totalSteps}
-            </span>
-            <span className="text-sm text-gray-500">
-              {getProgress()}% complété
-            </span>
+    <div className={`bg-white/10 backdrop-blur-sm p-8 rounded-2xl border border-white/20 ${className}`}>
+      <div className="text-center mb-8">
+        <h3 className="text-2xl font-bold text-white mb-4">
+          Demandez votre devis gratuit
+        </h3>
+        <p className="text-gray-300">
+          Remplissez ce formulaire et contactez-nous directement via WhatsApp
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Prénom *
+            </label>
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Votre prénom"
+            />
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${getProgress()}%` }}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Nom *
+            </label>
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Votre nom"
             />
           </div>
         </div>
-      )}
 
-      {/* Lead Score Indicator */}
-      {showLeadScore && leadScore > 0 && (
-        <div className="mb-6 p-3 bg-blue-50 rounded-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-blue-800">Score de qualification</span>
-            <span className="text-sm font-semibold text-blue-900">{leadScore}/100</span>
-          </div>
-          <div className="mt-2 w-full bg-blue-200 rounded-full h-1">
-            <div
-              className="bg-blue-600 h-1 rounded-full transition-all duration-300"
-              style={{ width: `${leadScore}%` }}
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Email *
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            required
+            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="votre@email.com"
+          />
         </div>
-      )}
 
-      {/* Step Content */}
-      {currentStepData && (
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            {currentStepData.title}
-          </h3>
-          {currentStepData.description && (
-            <p className="text-gray-600 mb-6">
-              {currentStepData.description}
-            </p>
-          )}
-
-          {/* Error Messages */}
-          {showErrors && validationErrors.length > 0 && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <h4 className="text-sm font-medium text-red-800 mb-2">
-                Veuillez corriger les erreurs suivantes :
-              </h4>
-              <ul className="text-sm text-red-700 space-y-1">
-                {validationErrors.map((error, index) => (
-                  <li key={index}>• {error}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Form Fields */}
-          <div className="space-y-6">
-            {currentStepData.fields.map(renderField)}
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Téléphone *
+          </label>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            required
+            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="+213 XXX XXX XXX"
+          />
         </div>
-      )}
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between">
-        <button
-          onClick={handlePrevious}
-          disabled={isFirstStep}
-          className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-            isFirstStep
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Précédent
-        </button>
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Nom de l'entreprise
+          </label>
+          <input
+            type="text"
+            name="businessName"
+            value={formData.businessName}
+            onChange={handleInputChange}
+            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="Nom de votre entreprise (optionnel)"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Message
+          </label>
+          <textarea
+            name="message"
+            value={formData.message}
+            onChange={handleInputChange}
+            rows={4}
+            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="Décrivez vos besoins ou posez vos questions..."
+          />
+        </div>
 
         <button
-          onClick={handleNext}
-          disabled={isSubmitting}
-          className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-            canProceedToNext() && !isSubmitting
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
+          type="submit"
+          disabled={isSubmitting || !formData.firstName || !formData.lastName || !formData.email || !formData.phone}
+          className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold py-4 px-6 rounded-lg hover:from-green-600 hover:to-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
-            <span className="flex items-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Envoi...
-            </span>
-          ) : isLastStep ? (
-            'Envoyer'
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              Redirection...
+            </>
           ) : (
-            'Suivant'
+            <>
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+              </svg>
+              Contacter via WhatsApp
+            </>
           )}
         </button>
+      </form>
+
+      <div className="mt-6 text-center">
+        <p className="text-sm text-gray-400">
+          En cliquant sur le bouton, vous serez redirigé vers WhatsApp pour finaliser votre demande.
+        </p>
       </div>
     </div>
   );

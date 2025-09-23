@@ -1,16 +1,9 @@
 import React from 'react';
-import useAnalytics from '../hooks/useAnalytics';
 
 const DemoVideo: React.FC = () => {
-  const { trackEvent } = useAnalytics();
+
 
   const handlePlayClick = () => {
-    trackEvent({
-      action: 'play',
-      category: 'engagement',
-      label: 'demo_video_start'
-    });
-    
     window.open('https://wa.me/213770123456?text=Salut ! J\'aimerais voir une demo complete d\'EcomBoost DZ', '_blank');
   };
 

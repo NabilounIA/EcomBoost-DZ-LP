@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import useAnalytics from '../hooks/useAnalytics';
+
 
 interface BlogPost {
   id: string;
@@ -101,7 +101,6 @@ const categories = ['Tous', 'IA & Technologie', 'Marketing Digital', 'Réseaux S
 
 const Blog: React.FC = () => {
   const { theme } = useTheme();
-  const { trackEvent } = useAnalytics();
   const [selectedCategory, setSelectedCategory] = useState('Tous');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -120,19 +119,10 @@ const Blog: React.FC = () => {
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
-    trackEvent({
-      action: 'filter_blog_category',
-      category: 'blog_interaction',
-      label: category
-    });
   };
 
   const handlePostClick = (postId: string, postTitle: string) => {
-    trackEvent({
-      action: 'click_blog_post',
-      category: 'blog_interaction',
-      label: postTitle
-    });
+    // Post click handled
   };
 
   const BlogCard: React.FC<{ post: BlogPost; featured?: boolean }> = ({ post, featured = false }) => (

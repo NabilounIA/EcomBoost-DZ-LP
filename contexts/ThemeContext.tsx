@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import analytics from '../services/analytics';
 
 type Theme = 'light' | 'dark';
 
@@ -61,14 +60,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const toggleTheme = () => {
     setThemeState(prevTheme => {
       const newTheme = prevTheme === 'light' ? 'dark' : 'light';
-      analytics.trackThemeChange(newTheme);
       return newTheme;
     });
   };
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    analytics.trackThemeChange(newTheme);
   };
 
   const value: ThemeContextType = {

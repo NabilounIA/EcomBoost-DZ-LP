@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import useAnalytics from '../hooks/useAnalytics';
+
 
 interface ThemeToggleProps {
   className?: string;
@@ -14,17 +14,10 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
   showLabel = false 
 }) => {
   const { theme, toggleTheme } = useTheme();
-  const { trackEvent } = useAnalytics();
+
 
   const handleToggle = () => {
     toggleTheme();
-    
-    // Analytics tracking
-    trackEvent({
-      action: 'toggle_theme',
-      category: 'ui_interaction',
-      label: theme === 'light' ? 'switch_to_dark' : 'switch_to_light'
-    });
   };
 
   const sizeClasses = {

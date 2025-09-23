@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import useAnalytics from '../hooks/useAnalytics';
+
 
 const ExitIntentPopup: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -9,7 +9,7 @@ const ExitIntentPopup: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   
-  const { trackEvent } = useAnalytics();
+
 
   useEffect(() => {
     // Vérifier si la popup a déjà été montrée dans cette session
@@ -29,11 +29,7 @@ const ExitIntentPopup: React.FC = () => {
         setHasShown(true);
         sessionStorage.setItem('exitPopupShown', 'true');
         
-        trackEvent({
-          action: 'show',
-          category: 'popup',
-          label: 'exit_intent_triggered'
-        });
+
       }
     };
 
@@ -44,11 +40,7 @@ const ExitIntentPopup: React.FC = () => {
         setHasShown(true);
         sessionStorage.setItem('exitPopupShown', 'true');
         
-        trackEvent({
-          action: 'show',
-          category: 'popup',
-          label: 'exit_intent_timeout'
-        });
+
       }
     }, 30000);
 
@@ -59,15 +51,10 @@ const ExitIntentPopup: React.FC = () => {
       document.removeEventListener('mouseleave', handleMouseLeave);
       clearTimeout(timeoutId);
     };
-  }, [hasShown, trackEvent]);
+  }, [hasShown]);
 
   const handleClose = () => {
     setIsVisible(false);
-    trackEvent({
-      action: 'close',
-      category: 'popup',
-      label: 'exit_intent_dismissed'
-    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,12 +66,6 @@ const ExitIntentPopup: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       setIsSuccess(true);
-      trackEvent({
-        action: 'submit',
-        category: 'conversion',
-        label: 'exit_intent_lead_captured',
-        value: 1
-      });
 
       // Rediriger vers WhatsApp avec les infos
       setTimeout(() => {

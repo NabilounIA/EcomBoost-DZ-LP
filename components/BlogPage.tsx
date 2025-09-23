@@ -1,14 +1,13 @@
 import React from 'react';
 import Blog from './Blog';
 import { useBlogSEO } from '../hooks/useSEO';
-import { usePagePerformance } from '../hooks/usePerformanceMonitoring';
+
 
 const BlogPage: React.FC = () => {
   // SEO optimization for blog page
   useBlogSEO();
   
-  // Performance monitoring for blog page
-  usePagePerformance('blog');
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">

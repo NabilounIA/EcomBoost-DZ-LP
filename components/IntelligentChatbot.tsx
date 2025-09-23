@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { analytics } from '../services/analytics';
+
 import { searchKnowledge, getSuggestedQuestions, KNOWLEDGE_BASE, COMPANY_INFO, SERVICES_DETAILS, PRICING_PLANS } from '../data/knowledgeBase';
 import { findSimilarConversations, detectSentiment, EXPERT_RESPONSES, ConversationExample } from '../data/trainingData';
 
@@ -304,12 +304,7 @@ const IntelligentChatbot: React.FC = () => {
       }
     }, 1500);
 
-    // Analytics
-    analytics.trackEvent('chatbot_interaction', {
-      message: message.substring(0, 50), // Limiter pour la confidentialité
-      hasKnowledgeMatch: intelligentResponse.suggestions ? intelligentResponse.suggestions.length > 0 : false,
-      conversationTopics: state.conversationContext.topics
-    });
+
   };
 
   // Gérer le calcul de ROI étape par étape
@@ -446,9 +441,7 @@ const IntelligentChatbot: React.FC = () => {
     );
     window.open(`https://wa.me/213XXXXXXXXX?text=${message}`, '_blank');
     
-    analytics.trackEvent('whatsapp_transfer', {
-      source: 'chatbot'
-    });
+
   };
 
   // Initialiser le chatbot
