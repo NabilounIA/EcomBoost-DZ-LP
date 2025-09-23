@@ -86,15 +86,35 @@ class AnalyticsService {
   }
 
   // Track custom events
-  trackEvent(event: AnalyticsEvent): void {
+  async trackEvent(event: AnalyticsEvent): Promise<void> {
     if (!this.isInitialized || !this.isEnabled) return;
-
-    window.gtag('event', event.action, {
-      event_category: event.category,
-      event_label: event.label,
-      value: event.value,
-      ...event.custom_parameters
-    });
+    
+    // Utiliser uniquement l'API serverless pour le tracking
+    // Cela sécurise toutes les clés API et identifiants
+    try {
+      const response = await fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          event: event.action,
+          category: event.category,
+          label: event.label,
+          value: event.value,
+          page: window.location.pathname,
+          userId: this.measurementId,
+          sessionId: Date.now().toString(),
+          ...event.custom_parameters
+        })
+      });
+      
+      if (!response.ok) {
+        console.warn('Server analytics tracking failed:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error sending analytics to server:', error);
+    }
 
     this.log('Event tracked', event);
   }

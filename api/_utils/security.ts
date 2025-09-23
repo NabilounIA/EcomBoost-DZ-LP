@@ -17,51 +17,84 @@ export interface ValidationSchema {
   };
 }
 
-// Store en mémoire pour le rate limiting (en production, utilisez Redis)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+// Types pour le rate limiting
+export interface RateLimitInfo {
+  totalHits: number;
+  resetTime: number;
+}
 
-/**
- * Middleware de rate limiting
- */
-export function rateLimit(config: RateLimitConfig) {
-  return (req: VercelRequest, res: VercelResponse, next: () => void) => {
-    const key = config.keyGenerator ? config.keyGenerator(req) : getClientIP(req);
-    const now = Date.now();
+export interface RateLimitStore {
+  increment(key: string): Promise<RateLimitInfo>;
+}
+
+// Implémentation en mémoire pour le stockage du rate limiting
+// ⚠️ AVERTISSEMENT DE SÉCURITÉ: Cette implémentation est uniquement pour le développement
+// En production, utilisez Redis ou une autre solution persistante pour éviter les problèmes suivants:
+// 1. Perte des données de rate limiting lors du redémarrage du serveur
+// 2. Inefficacité dans un environnement multi-instance
+// 3. Consommation excessive de mémoire en cas d'attaque DDoS
+class InMemoryStore implements RateLimitStore {
+  private store: Map<string, RateLimitInfo>;
+
+  constructor() {
+    this.store = new Map();
     
-    // Nettoyer les entrées expirées
-    for (const [k, v] of rateLimitStore.entries()) {
-      if (v.resetTime < now) {
-        rateLimitStore.delete(k);
+    // Nettoyage périodique pour éviter les fuites de mémoire
+    setInterval(() => this.cleanup(), 3600000); // Nettoyage toutes les heures
+  }
+
+  async increment(key: string): Promise<RateLimitInfo> {
+    const now = Date.now();
+    const record = this.store.get(key) || {
+      totalHits: 0,
+      resetTime: now + 60000, // 1 minute
+    };
+
+    // Si le temps de réinitialisation est dépassé, on remet à zéro
+    if (now > record.resetTime) {
+      record.totalHits = 0;
+      record.resetTime = now + 60000; // 1 minute
+    }
+
+    record.totalHits += 1;
+    this.store.set(key, record);
+    return record;
+  }
+  
+  // Méthode pour nettoyer les entrées expirées
+  private cleanup(): void {
+    const now = Date.now();
+    for (const [key, record] of this.store.entries()) {
+      if (now > record.resetTime) {
+        this.store.delete(key);
       }
     }
+  }
+}
+
+// Instance par défaut pour le rate limiting
+const defaultRateLimitStore = new InMemoryStore();
+
+/**
+ * Middleware de rate limiting amélioré
+ */
+export function rateLimit(config: RateLimitConfig) {
+  return async (req: VercelRequest, res: VercelResponse, next: () => void) => {
+    const key = config.keyGenerator ? config.keyGenerator(req) : getClientIP(req);
+    const store = defaultRateLimitStore;
     
-    const current = rateLimitStore.get(key);
+    const info = await store.increment(key);
     
-    if (!current) {
-      rateLimitStore.set(key, {
-        count: 1,
-        resetTime: now + config.windowMs
-      });
-      return next();
-    }
-    
-    if (current.resetTime < now) {
-      rateLimitStore.set(key, {
-        count: 1,
-        resetTime: now + config.windowMs
-      });
-      return next();
-    }
-    
-    if (current.count >= config.maxRequests) {
+    if (info.totalHits > config.maxRequests) {
+      const retryAfter = Math.ceil((info.resetTime - Date.now()) / 1000);
+      res.setHeader('Retry-After', String(retryAfter));
       return res.status(429).json({
         error: 'Trop de requêtes',
         message: 'Veuillez patienter avant de réessayer',
-        retryAfter: Math.ceil((current.resetTime - now) / 1000)
+        retryAfter: retryAfter
       });
     }
     
-    current.count++;
     next();
   };
 }

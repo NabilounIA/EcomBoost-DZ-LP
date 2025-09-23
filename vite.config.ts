@@ -60,8 +60,8 @@ export default defineConfig(({ mode }) => {
         ] : []),
       ],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        // Les clés API sont maintenant sécurisées via les API serverless
+        // Plus besoin d'exposer les clés côté client
       },
       resolve: {
         alias: {

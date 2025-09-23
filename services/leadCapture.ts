@@ -452,22 +452,58 @@ class LeadCaptureService {
       completeData.utm_medium = urlParams.get('utm_medium') || undefined;
       completeData.utm_campaign = urlParams.get('utm_campaign') || undefined;
 
-      // In a real implementation, send to your CRM/database
-      console.log('Submitting lead:', completeData);
+      // Envoyer les données à l'API serverless pour MongoDB
+      const response = await fetch('/api/database/connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          collection: 'leads',
+          operation: 'insertOne',
+          document: completeData
+        }),
+      });
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Track conversion in analytics
-      if (window.gtag) {
-        window.gtag('event', 'lead_submission', {
-          lead_score: completeData.leadScore,
-          business_type: completeData.businessType,
-          monthly_revenue: completeData.monthlyRevenue,
-          timeline: completeData.timelineToStart,
-          session_id: completeData.sessionId
-        });
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Échec de l\'enregistrement du lead');
       }
+
+      // Envoyer une notification par email via l'API serverless
+      await fetch('/api/email/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: 'contact@ecomboost-dz.com',
+          subject: `Nouveau lead: ${completeData.firstName} ${completeData.lastName}`,
+          html: `
+            <h2>Nouveau lead capturé</h2>
+            <p><strong>Nom:</strong> ${completeData.firstName} ${completeData.lastName}</p>
+            <p><strong>Email:</strong> ${completeData.email}</p>
+            <p><strong>Téléphone:</strong> ${completeData.phone}</p>
+            <p><strong>Entreprise:</strong> ${completeData.businessName}</p>
+            <p><strong>Score:</strong> ${completeData.leadScore}/100</p>
+          `
+        }),
+      });
+
+      // Track conversion in analytics via l'API serverless
+      await fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event: 'lead_submission',
+          category: 'conversion',
+          label: completeData.businessType,
+          value: completeData.leadScore,
+          userId: completeData.sessionId
+        }),
+      });
 
       // Reset form data
       this.leadData = {};
@@ -475,7 +511,7 @@ class LeadCaptureService {
 
       return {
         success: true,
-        leadId: `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        leadId: result.data?.insertedId || `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       };
 
     } catch (error) {
